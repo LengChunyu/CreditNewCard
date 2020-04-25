@@ -20,7 +20,6 @@
 @property (nonatomic,strong) UILabel *arrearsMoneyLabel;
 @property (nonatomic,strong) NSMutableArray *fontArray;
 @end
-
 @implementation CardHomeViewController
 -(void)viewWillDisappear:(BOOL)animated{
     [super viewWillDisappear:animated];
