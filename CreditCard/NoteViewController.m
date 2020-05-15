@@ -12,7 +12,7 @@
 #import "LcyCollectionViewLayout.h"
 #import "CollectionModel.h"
 #import <sys/utsname.h>
-@interface NoteViewController ()<UIScrollViewDelegate,PassTextFieldViewDelegate,UITextFieldDelegate,UICollectionViewDelegate,UICollectionViewDataSource,JVAlertViewDelegate>
+@interface NoteViewController ()<UIScrollViewDelegate,PassTextFieldViewDelegate,UITextFieldDelegate,UICollectionViewDelegate,UICollectionViewDataSource,JVAlertViewDelegate,UIGestureRecognizerDelegate>
 @property (nonatomic,strong) UILabel *payLabel;
 @property (nonatomic,strong) UILabel *incomeLabel;
 @property (nonatomic,strong) UIScrollView *backScrollView;
@@ -38,6 +38,7 @@
 @property (nonatomic,assign) BOOL firstOpen;
 @property (nonatomic,copy) NSString *deviceName;
 @property (nonatomic,strong) UIDatePicker *datePicker;
+@property (nonatomic,strong) UITapGestureRecognizer *oneTapResponders;
 
 @end
 struct utsname systemInfo;
@@ -188,6 +189,19 @@ struct utsname systemInfo;
 //
 //                [self.backScrollView setContentOffset:CGPointMake(0, offset) animated:NO];
 //            }
+        }completion:^(BOOL finished) {
+            
+//            for (UIGestureRecognizer *gestureRecognizer in  self.backScrollView.gestureRecognizers) {
+//                if (gestureRecognizer == self.oneTapResponders) {
+//                    [self.backScrollView removeGestureRecognizer:gestureRecognizer];
+//                    self.oneTapResponders = nil;
+//                }
+//                NSLog(@"current");
+//            }
+//            self.oneTapResponders =[[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(respondTapMethod:)];
+//            self.oneTapResponders.numberOfTapsRequired =1;
+//            self.oneTapResponders.numberOfTouchesRequired =1;
+//            [self.backScrollView addGestureRecognizer:self.oneTapResponders];
         }];
     }else{
         self.firstOpen =YES;
@@ -213,10 +227,11 @@ struct utsname systemInfo;
 }
 -(void)creatPay{
 
-    UITapGestureRecognizer *respondTap =[[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(respondTapMethod:)];
-    respondTap.numberOfTapsRequired =1;
-    respondTap.numberOfTouchesRequired =1;
-    [self.backScrollView addGestureRecognizer:respondTap];
+    self.oneTapResponders =[[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(respondTapMethod:)];
+    self.oneTapResponders.delegate = self;
+    self.oneTapResponders.numberOfTapsRequired =1;
+    self.oneTapResponders.numberOfTouchesRequired =1;
+    [self.backScrollView addGestureRecognizer:self.oneTapResponders];
     
     UIView *backView =[[UIView alloc]initWithFrame:CGRectMake(10,(SCREEN_HEIGHT-(iphoneX||iphoneXR||iphoneXSM?88:64))/5*2,SCREEN_WIDTH-20,54)];
     backView.backgroundColor =[UIColor colorWithRed:0.46 green:0.67 blue:0.49 alpha:1.00];
@@ -413,7 +428,9 @@ struct utsname systemInfo;
     self.timeTextField.text =timeString;
 }
 -(void)respondTapMethod:(UITapGestureRecognizer *)oneTap{
-
+    for (UIGestureRecognizer *gestureRecognizer in  self.backScrollView.gestureRecognizers) {
+        NSLog(@"current");
+    }
     if (self.moneyTextField.isFirstResponder) {
         
         [self.moneyTextField finishButtonClick];
@@ -754,6 +771,12 @@ struct utsname systemInfo;
     
     
     return @"1";
+}
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer{
+    return YES;
+}
+- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event{
+    NSLog(@"是否有反应");
 }
 -(void)dealloc{
     
