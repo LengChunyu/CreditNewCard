@@ -12,7 +12,7 @@
 #import "LcyCollectionViewLayout.h"
 #import "CollectionModel.h"
 #import <sys/utsname.h>
-@interface RepayViewController ()<UIScrollViewDelegate,PassTextFieldViewDelegate,UITextFieldDelegate,UICollectionViewDelegate,UICollectionViewDataSource,JVAlertViewDelegate>
+@interface RepayViewController ()<UIScrollViewDelegate,PassTextFieldViewDelegate,UITextFieldDelegate,UICollectionViewDelegate,UICollectionViewDataSource,JVAlertViewDelegate,UIGestureRecognizerDelegate>
 @property (nonatomic,strong) UILabel *payLabel;
 @property (nonatomic,strong) UILabel *incomeLabel;
 @property (nonatomic,strong) UIScrollView *backScrollView;
@@ -59,7 +59,18 @@ struct utsname repaySystemInfo;
         
         BBNavigationController *bbNavigation =(BBNavigationController *)self.navigationController;
         bbNavigation.panBeginBlock = ^{
-            
+            UIWindow *window = [[[UIApplication sharedApplication]delegate]window];
+            if (self.moneyTextField.keyBoardBackView.superview == window) {
+                
+                [UIView animateWithDuration:0.4 delay:0.0 options:UIViewAnimationOptionCurveLinear | UIViewAnimationOptionAllowUserInteraction animations:^{
+                        
+                    self.moneyTextField.keyBoardBackView.frame = CGRectMake(0, self.moneyTextField.keyBoardBackView.bottom+self.moneyTextField.keyBoardBackView.height, self.moneyTextField.keyBoardBackView.width, self.moneyTextField.keyBoardBackView.height);
+                } completion:^(BOOL finished) {
+                    
+                    [self.moneyTextField.keyBoardBackView removeFromSuperview];
+                    self.moneyTextField.inputView = self.moneyTextField.keyBoardBackView;
+                }];
+            }
             if ([self.moneyTextField isFirstResponder]) {
                 
                 [self.moneyTextField resignFirstResponder];
@@ -83,7 +94,12 @@ struct utsname repaySystemInfo;
 }
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
-    
+    if (!self.firstOpen) {
+       
+        self.firstOpen = YES;
+        UIWindow *window = [[[UIApplication sharedApplication]delegate]window];
+        [window addSubview:self.moneyTextField.keyBoardBackView];
+    }
 }
 - (void)viewDidLoad {
     [super viewDidLoad];
@@ -165,15 +181,10 @@ struct utsname repaySystemInfo;
     NSLog(@"高-%f",keyboardSize.height);
     NSLog(@"宽-%f",keyboardSize.width);
     //输入框位置动画加载
-    if (self.firstOpen) {
+    [UIView animateWithDuration:duration animations:^{
         
-        [UIView animateWithDuration:duration animations:^{
-            
-            [self.backScrollView setContentOffset:CGPointMake(0,(SCREEN_HEIGHT-(iphoneX||iphoneXR||iphoneXSM?88:64))/5*2-20)];
-        }];
-    }else{
-        self.firstOpen =YES;
-    }
+        [self.backScrollView setContentOffset:CGPointMake(0,(SCREEN_HEIGHT-(iphoneX||iphoneXR||iphoneXSM?88:64))/5*2-20)];
+    }];
 }
 -(void)tapClickOne:(UITapGestureRecognizer *)tap{
     
@@ -199,6 +210,7 @@ struct utsname repaySystemInfo;
     UITapGestureRecognizer *respondTap =[[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(respondTapMethod:)];
     respondTap.numberOfTapsRequired =1;
     respondTap.numberOfTouchesRequired =1;
+    respondTap.delegate = self;
     [self.backScrollView addGestureRecognizer:respondTap];
     
     UIView *backView =[[UIView alloc]initWithFrame:CGRectMake(10,(SCREEN_HEIGHT-(iphoneX||iphoneXR||iphoneXSM?88:64))/5*2,SCREEN_WIDTH-20,54)];
@@ -241,10 +253,9 @@ struct utsname repaySystemInfo;
         
         openSecond =0.8;
     }
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(openSecond * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        
-        [self.moneyTextField becomeFirstResponder];
-    });
+    
+    [self.moneyTextField becomeFirstResponder];
+    [self.view addSubview:self.moneyTextField.keyBoardBackView];
     
     UIView *backView1 =[[UIView alloc]initWithFrame:CGRectMake(10,backView.bottom+20,SCREEN_WIDTH-20,100)];
     backView1.backgroundColor =[UIColor colorWithRed:0.46 green:0.67 blue:0.49 alpha:1.00];
@@ -398,6 +409,21 @@ struct utsname repaySystemInfo;
     
     if (self.moneyTextField.isFirstResponder) {
         
+        if ([self.moneyTextField judgeFinishString]) {
+            
+            UIWindow *window = [[[UIApplication sharedApplication]delegate]window];
+            if (self.moneyTextField.keyBoardBackView.superview == window) {
+                
+                [UIView animateWithDuration:0.4 delay:0.0 options:UIViewAnimationOptionCurveLinear | UIViewAnimationOptionAllowUserInteraction animations:^{
+                        
+                    self.moneyTextField.keyBoardBackView.frame = CGRectMake(0, self.moneyTextField.keyBoardBackView.bottom+self.moneyTextField.keyBoardBackView.height, self.moneyTextField.keyBoardBackView.width, self.moneyTextField.keyBoardBackView.height);
+                } completion:^(BOOL finished) {
+                    
+                    [self.moneyTextField.keyBoardBackView removeFromSuperview];
+                    self.moneyTextField.inputView = self.moneyTextField.keyBoardBackView;
+                }];
+            }
+        }
         [self.moneyTextField finishButtonClick];
         [self.moneyTextField resignFirstResponder];
     }
@@ -523,6 +549,11 @@ struct utsname repaySystemInfo;
         }
     }else if(textField==self.timeTextField){
         
+        if (self.moneyTextField.isFirstResponder) {
+            
+            [self.moneyTextField finishButtonClick];
+            [self.remarkTextField becomeFirstResponder];
+        }
         NSDateFormatter *dateformatterD =[[NSDateFormatter alloc]init];
         [dateformatterD setDateFormat:@"yyyy-MM-dd HH:mm"];
         if (self.timeTextField.text.length>0) {
@@ -677,7 +708,8 @@ struct utsname repaySystemInfo;
      
         newDateAllString =[NSString stringWithFormat:@"%@%@",newDateAllString,self.lastSecondString];
     }
-    NSDictionary *consumeDic =@{@"bankNumber":@"",@"everyConsume":[self.moneyTextField.text stringByReplacingOccurrencesOfString:@" " withString:@""],@"detail":self.remarkTextField.text.length<=0?@"":self.remarkTextField.text,@"time":newDateAllString,@"month":dateArray [1],@"year":dateArray[0],@"bankStyle":@"",@"isCard":@"0",@"week":[self weekdayStringFromDate:self.customDate],@"moneyType":@"2",@"accountBookName":self.accountNameS};
+    NSString *moneyString = [self.moneyTextField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
+    NSDictionary *consumeDic =@{@"bankNumber":@"",@"everyConsume":[moneyString stringByReplacingOccurrencesOfString:@"-" withString:@""],@"detail":self.remarkTextField.text.length<=0?@"":self.remarkTextField.text,@"time":newDateAllString,@"month":dateArray [1],@"year":dateArray[0],@"bankStyle":@"",@"isCard":@"0",@"week":[self weekdayStringFromDate:self.customDate],@"moneyType":[moneyString containsString:@"-"]?@"1":@"2",@"accountBookName":self.accountNameS};
     if (self.isEdit) {
         [[CardDataFMDB shareSqlite]upDateConsumeAndIncome:consumeDic];
     }else{
@@ -737,6 +769,9 @@ struct utsname repaySystemInfo;
     
     
     return @"1";
+}
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer{
+    return YES;
 }
 -(void)dealloc{
     

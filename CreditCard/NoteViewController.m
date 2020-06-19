@@ -61,8 +61,21 @@ struct utsname systemInfo;
         BBNavigationController *bbNavigation =(BBNavigationController *)self.navigationController;
         bbNavigation.panBeginBlock = ^{
 
+            UIWindow *window = [[[UIApplication sharedApplication]delegate]window];
+            if (self.moneyTextField.keyBoardBackView.superview == window) {
+                
+                [UIView animateWithDuration:0.4 delay:0.0 options:UIViewAnimationOptionCurveLinear | UIViewAnimationOptionAllowUserInteraction animations:^{
+                        
+                    self.moneyTextField.keyBoardBackView.frame = CGRectMake(0, self.moneyTextField.keyBoardBackView.bottom+self.moneyTextField.keyBoardBackView.height, self.moneyTextField.keyBoardBackView.width, self.moneyTextField.keyBoardBackView.height);
+                } completion:^(BOOL finished) {
+                    
+                    [self.moneyTextField.keyBoardBackView removeFromSuperview];
+                    self.moneyTextField.inputView = self.moneyTextField.keyBoardBackView;
+                }];
+            }
             if ([self.moneyTextField isFirstResponder]) {
 
+                [self.moneyTextField finishButtonClick];
                 [self.moneyTextField resignFirstResponder];
             }
             if ([self.timeTextField isFirstResponder]) {
@@ -85,6 +98,12 @@ struct utsname systemInfo;
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
     
+    if (!self.firstOpen) {
+       
+        self.firstOpen = YES;
+        UIWindow *window = [[[UIApplication sharedApplication]delegate]window];
+        [window addSubview:self.moneyTextField.keyBoardBackView];
+    }
 }
 - (void)viewDidLoad {
     [super viewDidLoad];
@@ -121,25 +140,15 @@ struct utsname systemInfo;
     self.backScrollView.showsHorizontalScrollIndicator =NO;
     self.backScrollView.showsVerticalScrollIndicator =YES;
     self.backScrollView.backgroundColor =[UIColor colorWithRed:0.93 green:0.93 blue:0.93 alpha:1.00];
-//    self.backScrollView.bounces = NO;
     self.backScrollView.delegate =self;
     [self.view addSubview:self.backScrollView];
-    if (iphone5||iphone4) {
-        
-    }else{
+    [self.backScrollView setContentOffset:CGPointMake(0,(SCREEN_HEIGHT-(iphoneX||iphoneXR||iphoneXSM?88:64))/5*2-20)];
+    if (@available(iOS 11.0, *)) {
+        self.backScrollView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
+    } else {
         
     }
-    [self.backScrollView setContentOffset:CGPointMake(0,(SCREEN_HEIGHT-(iphoneX||iphoneXR||iphoneXSM?88:64))/5*2-20)];
-//    if ([[[UIDevice currentDevice] systemVersion] floatValue]>=11.0) {
-    
-        if (@available(iOS 11.0, *)) {
-            self.backScrollView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
-        } else {
-            // Fallback on earlier versions
-        }
-//    }
     [self creatPay];
-    
 }
 -(void)getData{
 
@@ -178,34 +187,31 @@ struct utsname systemInfo;
     NSLog(@"高-%f",keyboardSize.height);
     NSLog(@"宽-%f",keyboardSize.width);
     //输入框位置动画加载
-    if (self.firstOpen) {
+    [UIView animateWithDuration:duration animations:^{
         
-        [UIView animateWithDuration:duration animations:^{
-            
-            [self.backScrollView setContentOffset:CGPointMake(0,(SCREEN_HEIGHT-(iphoneX||iphoneXR||iphoneXSM?88:64))/5*2-20)];
-            
-//            CGFloat offset = self.backScrollView.contentSize.height - self.backScrollView.bounds.size.height;
-//            if (offset > 0){
-//
-//                [self.backScrollView setContentOffset:CGPointMake(0, offset) animated:NO];
-//            }
-        }completion:^(BOOL finished) {
-            
-//            for (UIGestureRecognizer *gestureRecognizer in  self.backScrollView.gestureRecognizers) {
-//                if (gestureRecognizer == self.oneTapResponders) {
-//                    [self.backScrollView removeGestureRecognizer:gestureRecognizer];
-//                    self.oneTapResponders = nil;
-//                }
-//                NSLog(@"current");
-//            }
-//            self.oneTapResponders =[[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(respondTapMethod:)];
-//            self.oneTapResponders.numberOfTapsRequired =1;
-//            self.oneTapResponders.numberOfTouchesRequired =1;
-//            [self.backScrollView addGestureRecognizer:self.oneTapResponders];
-        }];
-    }else{
-        self.firstOpen =YES;
-    }
+        [self.backScrollView setContentOffset:CGPointMake(0,(SCREEN_HEIGHT-(iphoneX||iphoneXR||iphoneXSM?88:64))/5*2-20)];
+        
+        //            CGFloat offset = self.backScrollView.contentSize.height - self.backScrollView.bounds.size.height;
+        //            if (offset > 0){
+        //
+        //                [self.backScrollView setContentOffset:CGPointMake(0, offset) animated:NO];
+        //            }
+    }completion:^(BOOL finished) {
+        
+        //            for (UIGestureRecognizer *gestureRecognizer in  self.backScrollView.gestureRecognizers) {
+        //                if (gestureRecognizer == self.oneTapResponders) {
+        //                    [self.backScrollView removeGestureRecognizer:gestureRecognizer];
+        //                    self.oneTapResponders = nil;
+        //                }
+        //                NSLog(@"current");
+        //            }
+        //            self.oneTapResponders =[[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(respondTapMethod:)];
+        //            self.oneTapResponders.numberOfTapsRequired =1;
+        //            self.oneTapResponders.numberOfTouchesRequired =1;
+        //            [self.backScrollView addGestureRecognizer:self.oneTapResponders];
+    }];
+        
+        
 }
 -(void)tapClickOne:(UITapGestureRecognizer *)tap{
 
@@ -273,11 +279,9 @@ struct utsname systemInfo;
        
         openSecond =0.8;
     }
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(openSecond * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+    [self.moneyTextField becomeFirstResponder];
+    [self.view addSubview:self.moneyTextField.keyBoardBackView];
 
-        [self.moneyTextField becomeFirstResponder];
-    });
-    
     UIView *backView1 =[[UIView alloc]initWithFrame:CGRectMake(10,backView.bottom+20,SCREEN_WIDTH-20,100)];
     backView1.backgroundColor =[UIColor colorWithRed:0.46 green:0.67 blue:0.49 alpha:1.00];
     backView1.layer.cornerRadius =5;
@@ -319,7 +323,6 @@ struct utsname systemInfo;
     }
     self.timeTextField =[[UITextField alloc]initWithFrame:CGRectMake(60,0,backView1.width-60,50)];
     self.timeTextField.delegate =self;
-//    self.timeTextField.keyboardType =UIKeyboardTypeDefault;
     self.timeTextField.tintColor =[UIColor clearColor];
     self.timeTextField.text =newDateStringD;
     self.timeTextField.textAlignment =NSTextAlignmentLeft;
@@ -428,11 +431,23 @@ struct utsname systemInfo;
     self.timeTextField.text =timeString;
 }
 -(void)respondTapMethod:(UITapGestureRecognizer *)oneTap{
-    for (UIGestureRecognizer *gestureRecognizer in  self.backScrollView.gestureRecognizers) {
-        NSLog(@"current");
-    }
+    
     if (self.moneyTextField.isFirstResponder) {
-        
+        if ([self.moneyTextField judgeFinishString]) {
+            
+            UIWindow *window = [[[UIApplication sharedApplication]delegate]window];
+            if (self.moneyTextField.keyBoardBackView.superview == window) {
+                
+                [UIView animateWithDuration:0.4 delay:0.0 options:UIViewAnimationOptionCurveLinear | UIViewAnimationOptionAllowUserInteraction animations:^{
+                        
+                    self.moneyTextField.keyBoardBackView.frame = CGRectMake(0, self.moneyTextField.keyBoardBackView.bottom+self.moneyTextField.keyBoardBackView.height, self.moneyTextField.keyBoardBackView.width, self.moneyTextField.keyBoardBackView.height);
+                } completion:^(BOOL finished) {
+                    
+                    [self.moneyTextField.keyBoardBackView removeFromSuperview];
+                    self.moneyTextField.inputView = self.moneyTextField.keyBoardBackView;
+                }];
+            }
+        }
         [self.moneyTextField finishButtonClick];
         [self.moneyTextField resignFirstResponder];
     }
@@ -551,6 +566,7 @@ struct utsname systemInfo;
 - (BOOL)textFieldShouldBeginEditing:(UITextField *)textField{
 
     if (textField==self.remarkTextField) {
+        
         if (self.moneyTextField.isFirstResponder) {
             
             [self.moneyTextField finishButtonClick];
@@ -558,6 +574,11 @@ struct utsname systemInfo;
         }
     }else if(textField==self.timeTextField){
         
+        if (self.moneyTextField.isFirstResponder) {
+            
+            [self.moneyTextField finishButtonClick];
+            [self.remarkTextField becomeFirstResponder];
+        }
         NSDateFormatter *dateformatterD =[[NSDateFormatter alloc]init];
         [dateformatterD setDateFormat:@"yyyy-MM-dd HH:mm"];
         if (self.timeTextField.text.length>0) {
@@ -584,6 +605,10 @@ struct utsname systemInfo;
     }else{
         return NO;
     }
+}
+-(BOOL)textFieldShouldEndEditing:(UITextField *)textField{
+    NSLog(@"textfile%@",textField);
+    return YES;
 }
 #pragma mark-CollectionViewDelegate
 -(NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section
@@ -694,6 +719,7 @@ struct utsname systemInfo;
 -(void)paySaveButton:(UIButton *)button{
     
     if (self.moneyTextField.isFirstResponder) {
+        
         [self.moneyTextField finishButtonClick];
     }
     NSDateFormatter *dateformatterD =[[NSDateFormatter alloc]init];
@@ -711,7 +737,8 @@ struct utsname systemInfo;
      
         newDateAllString =[NSString stringWithFormat:@"%@%@",newDateAllString,self.lastSecondString];
     }
-    NSDictionary *consumeDic =@{@"bankNumber":@"",@"everyConsume":[self.moneyTextField.text stringByReplacingOccurrencesOfString:@" " withString:@""],@"detail":self.remarkTextField.text.length<=0?@"":self.remarkTextField.text,@"time":newDateAllString,@"month":dateArray [1],@"year":dateArray[0],@"bankStyle":@"",@"isCard":@"0",@"week":[self weekdayStringFromDate:self.customDate],@"moneyType":@"1",@"accountBookName":self.accountNameS};
+    NSString *moneyString = [self.moneyTextField.text stringByReplacingOccurrencesOfString:@" " withString:@""];
+    NSDictionary *consumeDic =@{@"bankNumber":@"",@"everyConsume":[moneyString stringByReplacingOccurrencesOfString:@"-" withString:@""],@"detail":self.remarkTextField.text.length<=0?@"":self.remarkTextField.text,@"time":newDateAllString,@"month":dateArray [1],@"year":dateArray[0],@"bankStyle":@"",@"isCard":@"0",@"week":[self weekdayStringFromDate:self.customDate],@"moneyType":[moneyString containsString:@"-"]?@"2":@"1",@"accountBookName":self.accountNameS};
     if (self.isEdit) {
         [[CardDataFMDB shareSqlite]upDateConsumeAndIncome:consumeDic];
     }else{

@@ -10,7 +10,7 @@
 #import <AudioToolbox/AudioToolbox.h>
 @interface PassTextFild ()
 
-@property (nonatomic,strong) UIView *keyBoardBackView;
+
 @property (nonatomic,strong) NSTimer *timer;
 @property (nonatomic,strong) UILabel *textLabel;
 @end
@@ -40,13 +40,13 @@
     if (iphoneXSM||iphoneXR||iphoneX) {
         
         keyBoardY =[UIScreen mainScreen].bounds.size.height-34-keyBoardHeight;
-        self.keyBoardBackView =[[UIView alloc]initWithFrame:CGRectMake(0, 0,[UIScreen mainScreen].bounds.size.width,keyBoardHeight+34)];
+        self.keyBoardBackView =[[UIView alloc]initWithFrame:CGRectMake(0, keyBoardY,[UIScreen mainScreen].bounds.size.width,keyBoardHeight+34)];
         self.keyBoardBackView.backgroundColor =[UIColor colorWithPatternImage:[UIImage imageNamed:@"bgs.png"]];
         
     }else{
         
         keyBoardY =[UIScreen mainScreen].bounds.size.height-keyBoardHeight;
-        self.keyBoardBackView =[[UIView alloc]initWithFrame:CGRectMake(0, 0,[UIScreen mainScreen].bounds.size.width,keyBoardHeight)];
+        self.keyBoardBackView =[[UIView alloc]initWithFrame:CGRectMake(0, keyBoardY,[UIScreen mainScreen].bounds.size.width,keyBoardHeight)];
         self.keyBoardBackView.backgroundColor =[UIColor colorWithPatternImage:[UIImage imageNamed:@"bgs.png"]];
     }
 //    self.textLabel=[[UILabel alloc]initWithFrame:CGRectMake(0,0,[UIScreen mainScreen].bounds.size.width-6, 35)];
@@ -166,8 +166,8 @@
     descripSecLabel2.font =[UIFont fontWithName:@"STHeitiSC-Light" size:18];
     descripSecLabel2.text =[NSString stringWithFormat:@"完成"];
     [keyBoardView addSubview:descripSecLabel2];
-    
-    self.inputView =self.keyBoardBackView;
+    self.inputView = [[UIView alloc]initWithFrame:CGRectZero];
+//    self.inputView =self.keyBoardBackView;
 }
 -(void)commonDownClick:(UIButton *)btn{
     
@@ -502,6 +502,13 @@
         return;
     }
 }
+-(BOOL)judgeFinishString{
+    UILabel *finishL =[keyBoardView viewWithTag:1005];
+    if ([finishL.text isEqualToString:@"="]) {
+        return YES;
+    }
+    return NO;
+}
 -(void)finishButtonClick{
     
     UILabel *finishL =[keyBoardView viewWithTag:1005];
@@ -624,6 +631,7 @@
             if ([string isEqualToString:@"0.00"]) {
 
                 self.text =string;
+                [self changeInputView];
                 [self resignFirstResponder];
                 [self searchAllTextField];
                 return;
@@ -637,8 +645,23 @@
             string =[string substringToIndex:string.length-2];
         }
         self.text =string;
+
+        [self changeInputView];
         [self resignFirstResponder];
         [self searchAllTextField];
+    }
+}
+-(void)changeInputView{
+    UIWindow *window = [[[UIApplication sharedApplication]delegate]window];
+    if (self.keyBoardBackView.superview == window) {
+        
+        [UIView animateWithDuration:0.4 animations:^{
+            self.keyBoardBackView.frame = CGRectMake(0, self.keyBoardBackView.bottom+self.keyBoardBackView.height, self.keyBoardBackView.width, self.keyBoardBackView.height);
+        } completion:^(BOOL finished) {
+            
+            [self.keyBoardBackView removeFromSuperview];
+            self.inputView = self.keyBoardBackView;
+        }];
     }
 }
 - (BOOL)isPureInt:(NSString*)string{
@@ -731,6 +754,7 @@
 //隐藏
 -(void)goReturn
 {
+    [self changeInputView];
     [self resignFirstResponder];
 }
 -(CGRect)frameForSettingButtonUnderImage:(NSInteger)index

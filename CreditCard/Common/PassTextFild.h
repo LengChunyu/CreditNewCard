@@ -20,5 +20,7 @@
 }
 @property(nonatomic,strong)UIView *otherKeyBoardView;
 @property(nonatomic,weak)id<PassTextFieldViewDelegate>delegate;
+@property (nonatomic,strong) UIView *keyBoardBackView;
+-(BOOL)judgeFinishString;
 -(void)finishButtonClick;
 @end
